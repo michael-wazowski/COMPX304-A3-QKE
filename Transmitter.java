@@ -24,14 +24,7 @@ class Transmitter {
 
         // initialise socket for client connection to server
         try {
-
-
-
-
-
-
-            int streamLen = 16;
-
+            int streamLen = 256;
 
             Socket sock = new Socket(ia, Integer.valueOf(args[0])); // create socket connection to server
             ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
@@ -42,20 +35,50 @@ class Transmitter {
             for (int i=0;i<streamLen;i++) {
                 pVals.add(rand.nextInt(2));
                 bVals.add(rand.nextInt(2));
-                oos.writeObject(new Qubit(bVals.get(i), pVals.get(i)));
+                oos.writeUTF(bVals.get(i).toString()+","+pVals.get(i).toString());
+                oos.flush();
             }
 
             ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
 
+            String key = "";
+
             for (int i=0; i<streamLen; i++) {
                 String[] polAndBit = ois.readUTF().split(",");
+                if (polAndBit[1].equals(pVals.get(i).toString())) {
+                    if (polAndBit[0].equals(bVals.get(i).toString())) {
+                        key += polAndBit[0];
+                    }
+                }
             }
 
+            /* QKE Finished -> Message exchange from here */
 
+            // Message to encrypt
+            String message = "01101011"; // more or less arbitrary, as it is assumed to be already converted to binary
+   
+            // match key to message len for encryption
+            while (key.length() != message.length()) {
+                if (key.length() > message.length()) {
+                    key = key.substring(0, message.length());
+                } else {
+                    key += key;
+                }
+            }
 
+            String output = "";
+            for (int i=0; i<message.length(); i++) {
+                if (message.charAt(i) == '1' && key.charAt(i) == '1') {
+                    output += "0";
+                } else if (message.charAt(i) == '1' || key.charAt(i) == '1') {
+                    output += "1";
+                } else {
+                    output += "0";
+                }
+            }
 
-
-
+            oos.writeUTF(output);
+            oos.flush();
 
 
             sock.close();  // close socket
