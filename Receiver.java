@@ -1,78 +1,55 @@
-import java.io.*;
 import java.net.*;
+import java.util.*;
+import java.io.*;
 
-public class Receiver extends Thread {
-    ServerSocket ss;
-    Socket client;
-
-    public Receiver() {
+class Receiver {
+    public static void main(String[] args) {
         try {
-            ss = new ServerSocket(0);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
-    public String receiveMessage() {
-        if (client != null) {
-            try {
-                BufferedReader reader = new BufferedReader(new InputStreamReader(client.getInputStream()));
-                String line = reader.readLine();
-                reader.close();
+            int streamLen = 16;
 
-                return line;
-            } catch (IOException e) {
-                e.printStackTrace();
+
+
+
+            // Create a server socket, using port 0 to automatically bind it to an available port
+            ServerSocket ss = new ServerSocket(0);
+            System.out.println("Listening on port "+String.valueOf(ss.getLocalPort())); // display bound port
+            Socket s=null; // create null socket for client connection
+            s = ss.accept(); // Accept a client connection
+
+            ObjectInputStream ois = new ObjectInputStream(s.getInputStream());
+            // Qubit data = msg.geQubit();
+
+            Random rand = new Random();
+            ArrayList<Qubit> bits = new ArrayList<Qubit>();
+
+            ArrayList<Integer> pVals = new ArrayList<Integer>();
+            ArrayList<Integer> bVals = new ArrayList<Integer>();
+
+            for (int i=0; i<streamLen; i++) {
+                Qubit msg = (Qubit)ois.readObject();
+                pVals.add(rand.nextInt(2));
+                bVals.add(msg.measure(pVals.get(i)));
             }
-        } else {
-            System.out.println("ERROR: Client is null. Cannot receive message");
-        }
-        return "";
-    }
 
-    public void sendMessage(String message) {
-        if (client != null) {
-            try {
-                PrintWriter writer = new PrintWriter(client.getOutputStream());
-                writer.println(message);
-            } catch (IOException e) {
-                System.err.println("SEND: "+e.getMessage());
+
+            ObjectOutputStream oos = new ObjectOutputStream(s.getOutputStream());
+
+            for (int i=0; i<streamLen; i++) {
+                oos.writeUTF("");
             }
-        }
-    }
 
-    public void closeConn() {
-        if (client != null) {
-            try {
-                client.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
 
-    public void closeServer() {
-        try {
+
+
+
+
+
+            // close client and server sockets
+            s.close();
             ss.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (Exception e) {
+            System.err.println(e); // print any error to console/terminal
         }
-    }
-
-    public void acceptConn() {
-        try {
-            client = ss.accept();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public int getPort() {
-        return ss.getLocalPort();
-    }
-
-    public void run() {
-        this.acceptConn();
-        return;
     }
 }

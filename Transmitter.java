@@ -1,49 +1,67 @@
-import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.Random;
+import java.io.*;
 
-public class Transmitter {
+class Transmitter {
+    public static void main(String[] args) {
+        Random rand = new Random();
+        // confirm there are 2 arguments (ip to connect to and the port)
+        if (args.length != 1) {
+            System.out.println("Usage: Transmitter <port>"); // inform user on usage
+            return; // end program
+        }
 
-    Socket sock;
-    
-    public Transmitter(String host, int port) {
+        // initilise IA for socket creation later
+        InetAddress ia;
         try {
-            sock = new Socket(InetAddress.getByName(host), port);
-        } catch (IOException e) {
-            e.printStackTrace();
+            // attempt to get the IA from the submitted ip/host
+            ia = InetAddress.getByName("0.0.0.0");
+        } catch(UnknownHostException e) { // in case the host/ip is invalid
+            System.err.println("Unknown name for ip"); // inform user of error 
+            return; // end program
         }
-    }
 
-    public String receiveMessage() {
+        // initialise socket for client connection to server
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(sock.getInputStream()));
-            String line = reader.readLine();
-            reader.close();
 
-            return line;
+
+
+
+
+
+            int streamLen = 16;
+
+
+            Socket sock = new Socket(ia, Integer.valueOf(args[0])); // create socket connection to server
+            ObjectOutputStream oos = new ObjectOutputStream(sock.getOutputStream());
+            
+            ArrayList<Integer> pVals = new ArrayList<Integer>();
+            ArrayList<Integer> bVals = new ArrayList<Integer>();
+
+            for (int i=0;i<streamLen;i++) {
+                pVals.add(rand.nextInt(2));
+                bVals.add(rand.nextInt(2));
+                oos.writeObject(new Qubit(bVals.get(i), pVals.get(i)));
+            }
+
+            ObjectInputStream ois = new ObjectInputStream(sock.getInputStream());
+
+            for (int i=0; i<streamLen; i++) {
+                String[] polAndBit = ois.readUTF().split(",");
+            }
+
+
+
+
+
+
+
+
+            sock.close();  // close socket
         } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return "";
-    }
-
-    public void sendMessage(String message) {
-        if (sock != null) {
-            try {
-                PrintWriter writer = new PrintWriter(sock.getOutputStream());
-                writer.println(message);
-            } catch (IOException e) {
-                System.err.println("SEND: "+e.getMessage());
-            }
-        }
-    }
-
-    public void closeSocket() {
-        if (sock != null) {
-            try {
-                sock.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            System.err.println("IO Exception"+e); // print IO error
+            return;  // end program
         }
     }
 }

@@ -1,14 +1,15 @@
+import java.io.Serializable;
 import java.util.*;
 
-class Qubit {
+class Qubit implements Serializable{
     private Random rand = new Random(); // to randomly gen values
     private int value; // bit value, 0 for off 1 for on 
     private int polarization; // 0 is circular, 1 is linear
 
     // init qubit fields
-    public Qubit() {
-        value = rand.nextInt(2);
-        polarization = rand.nextInt(2);
+    public Qubit(int bVal, int polVal) {
+        value = bVal;
+        polarization = polVal;
     }
 
     public void set(int val, int pol) { // sets value and polarisation to submitted values
